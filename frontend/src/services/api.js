@@ -1,14 +1,17 @@
 import axios from 'axios';
 
-// Get base URL from Vite environment variable with localhost fallback
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
+// Normalize API base URL from Vite environment variable
+let rawBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
+rawBaseUrl = rawBaseUrl.trim().replace(/\/+$/, '');
+// If user set base URL without /api at the end, append it automatically
+const API_BASE_URL = rawBaseUrl.endsWith('/api') ? rawBaseUrl : `${rawBaseUrl}/api`;
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000,
+  timeout: 15000,
 });
 
 // Response interceptor to standardize error messages and format
