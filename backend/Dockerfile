@@ -2,9 +2,9 @@
 FROM maven:3.9.6-eclipse-temurin-17 AS build
 WORKDIR /app
 
-# Copy pom.xml and src supporting both repository root and backend folder build contexts
-COPY pom.xml ./
-COPY src/ ./src/
+# Copy pom.xml and src from repository root or backend folder
+COPY backend/pom.xml* pom.xml* ./
+COPY backend/src* src* ./src/
 
 RUN mvn clean package -DskipTests
 
