@@ -1,17 +1,29 @@
 import axios from 'axios';
 
-// Normalize API base URL from Vite environment variable
-let rawBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
-rawBaseUrl = rawBaseUrl.trim().replace(/\/+$/, '');
-// If user set base URL without /api at the end, append it automatically
-const API_BASE_URL = rawBaseUrl.endsWith('/api') ? rawBaseUrl : `${rawBaseUrl}/api`;
+// Determine API Base URL:
+// 1. Check runtime localStorage override (allows setting Render URL directly from UI if needed)
+// 2. Vite environment variable (VITE_API_BASE_URL)
+// 3. Fallback to default
+const getBaseUrl = () => {
+  let url = (typeof window !== 'undefined' && localStorage.getItem('CMS_API_URL'))
+    || import.meta.env.VITE_API_BASE_URL
+    || 'http://localhost:8080/api';
+  url = url.trim().replace(/\/+$/, '');
+  return url.endsWith('/api') ? url : `${url}/api`;
+};
 
 const apiClient = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: getBaseUrl(),
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 15000,
+  timeout: 30000,
+});
+
+// Update baseURL on each request in case localStorage changed
+apiClient.interceptors.request.use((config) => {
+  config.baseURL = getBaseUrl();
+  return config;
 });
 
 // Response interceptor to standardize error messages and format
@@ -38,7 +50,12 @@ apiClient.interceptors.response.use(
         errorMsg = `Server error (${error.response.status}): ${error.response.statusText}`;
       }
     } else if (error.request) {
-      errorMsg = 'Cannot connect to backend server. Please check if Spring Boot is running on port 8080.';
+      const currentUrl = getBaseUrl();
+      if (currentUrl.includes('localhost')) {
+        errorMsg = `Cannot connect to backend server at ${currentUrl}. You are on production (Vercel), but VITE_API_BASE_URL was not baked into this build. Click 'Server Settings' below to paste your Render backend URL!`;
+      } else {
+        errorMsg = `Cannot reach backend at ${currentUrl}. Note: Render free tier services spin down after inactivity and take 30-50 seconds to wake up. Please check if your Render service is Live.`;
+      }
     } else if (error.message) {
       errorMsg = error.message;
     }

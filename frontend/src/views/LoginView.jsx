@@ -1,10 +1,14 @@
-import React, { useState } from 'react';
-import { Building2, Lock, User, Mail, Shield, ArrowRight, CheckCircle2, UserPlus, LogIn } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Building2, Lock, User, Mail, Shield, ArrowRight, CheckCircle2, UserPlus, LogIn, Settings, Globe } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
 
 export const LoginView = () => {
   const [isRegister, setIsRegister] = useState(false);
+  const [showConfig, setShowConfig] = useState(false);
+  const [customServerUrl, setCustomServerUrl] = useState(() => {
+    return (typeof window !== 'undefined' && localStorage.getItem('CMS_API_URL')) || '';
+  });
 
   // Login form state
   const [loginUsername, setLoginUsername] = useState('admin');
@@ -72,6 +76,21 @@ export const LoginView = () => {
   const handleDemoFill = () => {
     setLoginUsername('admin');
     setLoginPassword('admin123');
+    setError('');
+  };
+
+  const handleSaveServerUrl = (e) => {
+    e.preventDefault();
+    if (!customServerUrl.trim()) {
+      localStorage.removeItem('CMS_API_URL');
+      addToast('Reset backend URL to default', 'info');
+    } else {
+      let formatted = customServerUrl.trim().replace(/\/+$/, '');
+      if (!formatted.endsWith('/api')) formatted += '/api';
+      localStorage.setItem('CMS_API_URL', formatted);
+      setCustomServerUrl(formatted);
+      addToast(`Backend server URL updated to: ${formatted}`, 'success');
+    }
     setError('');
   };
 
@@ -155,7 +174,7 @@ export const LoginView = () => {
             backgroundColor: '#f1f5f9',
             padding: '4px',
             borderRadius: 12,
-            marginBottom: 24
+            marginBottom: 20
           }}>
             <button
               type="button"
@@ -207,7 +226,7 @@ export const LoginView = () => {
             </button>
           </div>
 
-          <div style={{ marginBottom: 20 }}>
+          <div style={{ marginBottom: 16 }}>
             <h3 style={{ fontSize: '1.45rem', fontWeight: 700, color: '#0f172a', marginBottom: 4 }}>
               {isRegister ? 'Create Account' : 'Administrator Sign In'}
             </h3>
@@ -226,7 +245,7 @@ export const LoginView = () => {
               padding: '12px 16px',
               borderRadius: 8,
               fontSize: '0.86rem',
-              marginBottom: 18
+              marginBottom: 16
             }}>
               {error}
             </div>
@@ -251,7 +270,7 @@ export const LoginView = () => {
                 </div>
               </div>
 
-              <div className="form-group" style={{ marginBottom: 24 }}>
+              <div className="form-group" style={{ marginBottom: 20 }}>
                 <label className="form-label required">Password</label>
                 <div className="search-wrapper">
                   <Lock size={18} className="search-icon" />
@@ -278,13 +297,13 @@ export const LoginView = () => {
               </button>
 
               <div style={{
-                marginTop: 24,
-                padding: '14px 16px',
+                marginTop: 20,
+                padding: '12px 14px',
                 backgroundColor: '#f8fafc',
                 border: '1px dashed #cbd5e1',
                 borderRadius: 12
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
                   <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#334155' }}>
                     Demo Credentials:
                   </span>
@@ -292,7 +311,7 @@ export const LoginView = () => {
                     type="button"
                     onClick={handleDemoFill}
                     className="btn btn-outline-primary btn-sm"
-                    style={{ padding: '3px 8px', fontSize: '0.74rem' }}
+                    style={{ padding: '2px 8px', fontSize: '0.74rem' }}
                   >
                     Auto Fill
                   </button>
@@ -393,14 +412,14 @@ export const LoginView = () => {
               <button
                 type="submit"
                 className="btn btn-primary"
-                style={{ width: '100%', padding: '12px', fontSize: '0.95rem', marginTop: 12 }}
+                style={{ width: '100%', padding: '12px', fontSize: '0.95rem', marginTop: 10 }}
                 disabled={loading}
               >
                 {loading ? 'Creating Account...' : 'Register & Enter CMS'}
                 <UserPlus size={18} />
               </button>
 
-              <p style={{ marginTop: 16, textAlign: 'center', fontSize: '0.82rem', color: '#64748b' }}>
+              <p style={{ marginTop: 14, textAlign: 'center', fontSize: '0.82rem', color: '#64748b' }}>
                 Already registered?{' '}
                 <button
                   type="button"
@@ -412,6 +431,66 @@ export const LoginView = () => {
               </p>
             </form>
           )}
+
+          {/* Quick Backend Server Configuration Widget */}
+          <div style={{ marginTop: 20, textAlign: 'center' }}>
+            <button
+              type="button"
+              onClick={() => setShowConfig(!showConfig)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#64748b',
+                fontSize: '0.78rem',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5
+              }}
+            >
+              <Settings size={14} />
+              {showConfig ? 'Hide Backend Settings' : 'Configure Backend Server URL (Render)'}
+            </button>
+
+            {showConfig && (
+              <form onSubmit={handleSaveServerUrl} style={{
+                marginTop: 10,
+                padding: '12px',
+                backgroundColor: '#f1f5f9',
+                borderRadius: 8,
+                textAlign: 'left'
+              }}>
+                <label style={{ fontSize: '0.76rem', color: '#475569', fontWeight: 600, display: 'block', marginBottom: 4 }}>
+                  Backend API URL (Render):
+                </label>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <input
+                    type="text"
+                    value={customServerUrl}
+                    onChange={(e) => setCustomServerUrl(e.target.value)}
+                    placeholder="https://cms-backend-xxxx.onrender.com/api"
+                    style={{
+                      flex: 1,
+                      padding: '6px 10px',
+                      borderRadius: 6,
+                      border: '1px solid #cbd5e1',
+                      fontSize: '0.8rem'
+                    }}
+                  />
+                  <button
+                    type="submit"
+                    className="btn btn-primary btn-sm"
+                    style={{ fontSize: '0.78rem', padding: '6px 12px' }}
+                  >
+                    Save URL
+                  </button>
+                </div>
+                <span style={{ fontSize: '0.72rem', color: '#64748b', display: 'block', marginTop: 4 }}>
+                  Tip: Paste your Render URL here so Vercel connects immediately without needing to re-build.
+                </span>
+              </form>
+            )}
+          </div>
         </div>
       </div>
     </div>
