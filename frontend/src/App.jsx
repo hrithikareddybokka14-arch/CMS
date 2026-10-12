@@ -22,6 +22,15 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
+// Route wrapper to redirect already logged-in users away from /login
+const PublicOnlyRoute = ({ children }) => {
+  const { isAuthenticated } = useAuth();
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  return children;
+};
+
 // Route wrapper for StudentDetailView with URL parameter support
 const StudentDetailRouteWrapper = () => {
   const { id } = useParams();
@@ -172,7 +181,14 @@ export default function App() {
       <ToastProvider>
         <BrowserRouter>
           <Routes>
-            <Route path="/login" element={<LoginView />} />
+            <Route 
+              path="/login" 
+              element={
+                <PublicOnlyRoute>
+                  <LoginView />
+                </PublicOnlyRoute>
+              } 
+            />
             <Route
               path="/*"
               element={

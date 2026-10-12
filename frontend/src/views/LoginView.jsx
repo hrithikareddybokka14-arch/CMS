@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Building2, Lock, User, Mail, Shield, ArrowRight, CheckCircle2, UserPlus, LogIn, Settings, Globe } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
 
 export const LoginView = () => {
+  const navigate = useNavigate();
   const [isRegister, setIsRegister] = useState(false);
   const [showConfig, setShowConfig] = useState(false);
   const [customServerUrl, setCustomServerUrl] = useState(() => {
@@ -40,6 +42,7 @@ export const LoginView = () => {
       addToast('Login failed: Invalid credentials', 'error');
     } else {
       addToast(`Welcome back, ${res.user.name || 'Admin'}!`, 'success');
+      navigate('/dashboard');
     }
   };
 
@@ -70,6 +73,7 @@ export const LoginView = () => {
       addToast(`Registration failed: ${res.error}`, 'error');
     } else {
       addToast(`Account created successfully! Welcome, ${res.user.name}`, 'success');
+      navigate('/dashboard');
     }
   };
 
